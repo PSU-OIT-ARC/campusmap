@@ -355,13 +355,13 @@ export class MapComponent implements OnInit {
             const mapView = map.getView();
             const center = extent.getCenter(feature.getGeometry().getExtent());
             const centerPixel = map.getPixelFromCoordinate(center);
-            let x = centerPixel[0];
+            const x = centerPixel[0];
             const y = centerPixel[1];
 
             if (x < threshold) {
-                x = x - (sidenavWidth / 2);
+                const newX = x - (sidenavWidth / 2);
                 mapView.animate({
-                  center: map.getCoordinateFromPixel([x, y]),
+                  center: map.getCoordinateFromPixel([newX, y]),
                   duration: 400
                 });
             }
