@@ -345,6 +345,13 @@ export class MapComponent implements OnInit {
             const threshold = sidenavWidth + (sidenavWidth * 0.1);
 
             const map = this.map;
+            const size = map.getSize();
+            const width = size[0];
+
+            if (width < threshold) {
+                return;
+            }
+
             const mapView = map.getView();
             const center = extent.getCenter(feature.getGeometry().getExtent());
             const centerPixel = map.getPixelFromCoordinate(center);
