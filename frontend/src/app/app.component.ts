@@ -5,7 +5,6 @@ import { Component, ElementRef, OnInit } from '@angular/core';
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss']
 })
-    name = 'PSU Campus Map App';
 export class AppComponent implements OnInit {
     constructor (private host: ElementRef) {
 

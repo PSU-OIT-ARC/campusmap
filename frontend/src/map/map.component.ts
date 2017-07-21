@@ -47,7 +47,6 @@ const center = extent.getCenter(mapExtent);
     ]
 })
 export class MapComponent implements OnInit {
-    name = 'PSU Campus Map';
     map: Map;
     baseLayers: Array<any>;
 
