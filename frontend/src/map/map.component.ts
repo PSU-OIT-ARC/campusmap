@@ -288,13 +288,11 @@ export class MapComponent implements OnInit {
     }
 
     addInteractions (map: Map, baseLayers, featureLayers) {
-        const buildingSelector = this.makeBuildingSelectInteraction(
-            featureLayers[0]);
+        const buildingLayer = featureLayers[0];
+        const buildingSelector = this.makeBuildingSelectInteraction(buildingLayer);
+        const buildingHighlighter = this.makeBuildingHighlighterInteraction(buildingLayer);
         map.addInteraction(buildingSelector);
-        const buildingHighlighter = this.makeBuildingHighlighterInteraction(
-            featureLayers[0]);
         map.addInteraction(buildingHighlighter);
-
     }
 
     switchBaseLayer (layer) {
