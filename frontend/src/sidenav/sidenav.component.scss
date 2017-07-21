@@ -1,0 +1,21 @@
+@import "../variables";
+
+md-sidenav.mat-sidenav {
+    width: $sidenav-width;
+    .container {
+        position: absolute;
+        top: $search-form-height + $twice-standard-padding;
+        right: $standard-padding;
+        bottom: $standard-padding;
+        left: $standard-padding;
+        overflow: auto;
+        .title {
+            margin: 0;
+        }
+    }
+
+    @media (max-width: $xxs-breakpoint) {
+        width: 100%;
+    }
+}
+

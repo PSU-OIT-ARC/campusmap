@@ -3,33 +3,25 @@
 
 :host {
     position: absolute;
-    top: $toolbar-height;
+    top: 0;
     right: 0;
     bottom: 0;
     left: 0;
+    overflow: hidden;
 }
 
-:host /deep/ .mat-sidenav-backdrop.mat-sidenav-shown {
-    background-color: transparent;
-}
-
-md-sidenav-container, .map {
+.map {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
-}
-
-md-sidenav {
-    width: $sidenav-width;
-    padding: $standard-padding;
-    padding-top: $standard-padding * 2 + $search-form-height;
+    overflow: hidden;
 }
 
 .map-controls {
     position: absolute;
-    z-index: 10;
+    z-index: 1;
     right: $standard-padding;
     bottom: $standard-padding;
 
@@ -40,14 +32,5 @@ md-sidenav {
     }
     .map-control:last-child {
         margin-bottom: 0;
-    }
-}
-
-@media (max-width: $sm-width) {
-    :host {
-        top: $toolbar-height-sm;
-    }
-    md-sidenav {
-        width: $sidenav-width-sm;
     }
 }

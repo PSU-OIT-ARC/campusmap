@@ -1,3 +1,5 @@
+@import "../variables";
+
 :host {
     position: absolute;
     top: 0;
@@ -10,4 +12,9 @@ a.logo {
     img {
         display: block;
     }
+}
+
+md-toolbar a {
+    color: white;
+    text-decoration: none;
 }

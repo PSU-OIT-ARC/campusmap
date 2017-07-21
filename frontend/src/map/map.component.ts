@@ -1,5 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { MdSidenav } from '@angular/material';
+import { Component, ElementRef, OnInit } from '@angular/core';
 
 
 import extent from 'ol/extent';
@@ -30,20 +29,14 @@ import Text from 'ol/style/text';
 
 import { colorsHex, colorsRGB } from '../constants';
 import { environment } from '../environments/environment';
+import { SidenavService } from '../sidenav/sidenav.service';
+
 
 const floorplanBaseURL = 'http://www.pdx.edu/floorplans/buildings/';
 const epsg = 'EPSG:3857';
 const projection = proj.get(epsg);
 const mapExtent = [-13657661.739414563, 5700905.92043886, -13655116.88116592, 5702920.846916851];
 const center = extent.getCenter(mapExtent);
-
-
-interface FeatureInfo {
-    name: String,
-    code: String,
-    buildingHref: String,
-    address: String
-}
 
 
 @Component({
@@ -57,12 +50,10 @@ export class MapComponent implements OnInit {
     name = 'PSU Campus Map';
     map: Map;
     baseLayers: Array<any>;
-    featureInfo: FeatureInfo = <FeatureInfo>{};
 
-    @ViewChild('sidenav')
-    private sidenav: MdSidenav;
-
-    constructor (private host: ElementRef) {
+    constructor (
+        private host: ElementRef,
+        private sidenavService: SidenavService) {
         // Pass
     }
 
@@ -87,8 +78,6 @@ export class MapComponent implements OnInit {
         this.addInteractions(map, baseLayers, featureLayers);
 
         map.getView().fit(mapExtent);
-
-        this.host.nativeElement.querySelector('.mat-sidenav-backdrop').remove();
     }
 
     makeBaseLayers () {
@@ -337,17 +326,25 @@ export class MapComponent implements OnInit {
 
     showFeatureInfo (feature) {
         const props = feature.getProperties();
+        const title = props.name;
+        const subtitle = props.code;
+        const buildingHref = `${floorplanBaseURL}${props.code.toLowerCase()}`;
+        const address = props.address;
 
-        this.featureInfo = {
-            name: props.name,
-            code: props.code,
-            buildingHref: `${floorplanBaseURL}${props.code.toLowerCase()}`,
-            address: props.address
+        const body = `
+            <div>${address}</div>
+            <div><a href="${buildingHref}">Building info & floorplans</a></div>                
+        `;
+
+        const data = {
+            title: title,
+            subtitle: subtitle,
+            body: body
         };
 
-        this.sidenav.open().then(() => {
-            // XXX: Use of private property
-            const sidenavWidth = this.sidenav._width;
+        this.sidenavService.setContent(data).subscribe(state => {
+            // XXX: Magic number
+            const sidenavWidth = 400;
             const threshold = sidenavWidth + (sidenavWidth * 0.1);
 
             const map = this.map;
@@ -373,6 +370,6 @@ export class MapComponent implements OnInit {
             (interaction) => interaction instanceof SelectInteraction
         );
         selected.map((select) => select.getFeatures().clear());
-        this.sidenav.close();
+        this.sidenavService.close();
     }
 }

@@ -1,0 +1,14 @@
+<md-sidenav #sidenav (click)="sidenav.close()">
+    <div class="container" *ngIf="data" fxLayout="column">
+        <div fxLayout="row" fxLayoutAlign="start center">
+            <h2 class="title" fxFlex>{{ data.title }}</h2>
+            <button (click)="sidenav.close()" md-icon-button>
+                <md-icon>close</md-icon>
+            </button>
+        </div>
+
+        <h3 class="subtitle" *ngIf="data.subtitle">{{ data.subtitle }}</h3>
+
+        <div class="body" [innerHTML]="data.body"></div>
+    </div>
+</md-sidenav>
