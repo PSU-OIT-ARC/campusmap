@@ -330,7 +330,6 @@ export class MapComponent implements OnInit {
         const map = this.map;
         const size = map.getSize();
         const width = size[0];
-        const threshold = sidenavWidth + (sidenavWidth * 0.1);
 
         const props = feature.getProperties();
         const address = props.address;
@@ -353,22 +352,20 @@ export class MapComponent implements OnInit {
 
         this.sidenavService.setState(sidenavState);
 
-        if (width < threshold) {
-            return;
-        }
-
-        const mapView = map.getView();
-        const center = extent.getCenter(feature.getGeometry().getExtent());
-        const centerPixel = map.getPixelFromCoordinate(center);
-        const x = centerPixel[0];
-        const y = centerPixel[1];
-
-        if (x < threshold) {
-            const newX = x - (sidenavWidth / 2);
-            mapView.animate({
-              center: map.getCoordinateFromPixel([newX, y]),
-              duration: 400
-            });
+        if (width >= sidenavWidth) {
+            const featureExtent = feature.getGeometry().getExtent();
+            const leftPixel = map.getPixelFromCoordinate([featureExtent[0], featureExtent[1]]);
+            const leftEdge = leftPixel[0];
+            if (leftEdge < sidenavWidth) {
+                const featureCenter = extent.getCenter(featureExtent);
+                const featureCenterPixel = map.getPixelFromCoordinate(featureCenter);
+                const newX = featureCenterPixel[0] - sidenavWidth / 2;
+                const newCenter = map.getCoordinateFromPixel([newX, featureCenterPixel[1]]);
+                map.getView().animate({
+                    center: newCenter,
+                    duration: 400
+                });
+            }
         }
     }
 
