@@ -2,18 +2,12 @@ import { Injectable } from '@angular/core';
 
 import { Subject } from 'rxjs/Subject';
 
-
-class ContentState {
-    title?: string;
-    subtitle?: string;
-    body: string;
-    isOpen: boolean = false;
-}
+import { SidenavState } from './sidenav-state';
 
 
 @Injectable()
 export class SidenavService {
-    contentState = new Subject<ContentState>();
+    state = new Subject<SidenavState>();
     openState = new Subject<boolean>();
 
     constructor () {
@@ -22,24 +16,13 @@ export class SidenavService {
 
     open () {
         this.openState.next(true);
-        return this.openState;
     }
 
     close () {
         this.openState.next(false);
-        return this.openState;
     }
 
-    setContent (data, open=true) {
-        this.contentState.next({
-            title: data.title,
-            subtitle: data.subtitle,
-            body: data.body,
-            isOpen: open
-        });
-        if (open) {
-            this.open();
-        }
-        return this.contentState;
+    setState (state: SidenavState) {
+        this.state.next(state);
     }
 }

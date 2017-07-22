@@ -4,18 +4,25 @@ md-sidenav.mat-sidenav {
     width: $sidenav-width;
     .container {
         position: absolute;
-        top: $search-form-height + $twice-standard-padding;
-        right: $standard-padding;
-        bottom: $standard-padding;
-        left: $standard-padding;
+        top: $search-form-height + $standard-padding;
+        right: 0;
+        bottom: 0;
+        left: 0;
         overflow: auto;
-        .title {
-            margin: 0;
+        .header {
+            padding: $standard-padding;
+            .title, .subtitle {
+                margin: 0;
+            }
         }
     }
 
     @media (max-width: $xxs-breakpoint) {
+        top: $search-form-height + $half-standard-padding;
         width: 100%;
+        .header {
+            padding: $half-standard-padding;
+        }
     }
 }
 

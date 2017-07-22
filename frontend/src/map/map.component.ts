@@ -29,7 +29,9 @@ import Text from 'ol/style/text';
 
 import { colorsHex, colorsRGB } from '../constants';
 import { environment } from '../environments/environment';
+
 import { SidenavService } from '../sidenav/sidenav.service';
+import { MapFeatureInfoComponent } from './feature-info.component';
 
 
 const floorplanBaseURL = 'http://www.pdx.edu/floorplans/buildings/';
@@ -322,50 +324,52 @@ export class MapComponent implements OnInit {
     }
 
     showFeatureInfo (feature) {
+        // XXX: Magic number
+        const sidenavWidth = 400;
+
+        const map = this.map;
+        const size = map.getSize();
+        const width = size[0];
+        const threshold = sidenavWidth + (sidenavWidth * 0.1);
+
         const props = feature.getProperties();
-        const title = props.name;
-        const subtitle = props.code;
-        const buildingHref = `${floorplanBaseURL}${props.code.toLowerCase()}`;
         const address = props.address;
+        const buildingHref = props.code ? `${floorplanBaseURL}${props.code.toLowerCase()}` : null;
 
-        const body = `
-            <div>${address}</div>
-            <div><a href="${buildingHref}">Building info & floorplans</a></div>                
-        `;
-
-        const data = {
-            title: title,
-            subtitle: subtitle,
-            body: body
+        const sidenavState = {
+            content: {
+                title: props.name,
+                subtitle: props.code,
+                bodyComponent: MapFeatureInfoComponent,
+                bodyContext: {
+                    name: props.name,
+                    address: address,
+                    buildingHref: buildingHref
+                }
+            },
+            open: true,
+            closeable: true
         };
 
-        this.sidenavService.setContent(data).subscribe(state => {
-            // XXX: Magic number
-            const sidenavWidth = 400;
-            const threshold = sidenavWidth + (sidenavWidth * 0.1);
+        this.sidenavService.setState(sidenavState);
 
-            const map = this.map;
-            const size = map.getSize();
-            const width = size[0];
+        if (width < threshold) {
+            return;
+        }
 
-            if (width < threshold) {
-                return;
-            }
+        const mapView = map.getView();
+        const center = extent.getCenter(feature.getGeometry().getExtent());
+        const centerPixel = map.getPixelFromCoordinate(center);
+        const x = centerPixel[0];
+        const y = centerPixel[1];
 
-            const mapView = map.getView();
-            const center = extent.getCenter(feature.getGeometry().getExtent());
-            const centerPixel = map.getPixelFromCoordinate(center);
-            const x = centerPixel[0];
-            const y = centerPixel[1];
-
-            if (x < threshold) {
-                const newX = x - (sidenavWidth / 2);
-                mapView.animate({
-                  center: map.getCoordinateFromPixel([newX, y]),
-                  duration: 400
-                });
-            }
-        });
+        if (x < threshold) {
+            const newX = x - (sidenavWidth / 2);
+            mapView.animate({
+              center: map.getCoordinateFromPixel([newX, y]),
+              duration: 400
+            });
+        }
     }
 
     hideFeatureInfo () {
