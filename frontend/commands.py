@@ -86,4 +86,6 @@ def build(config, local_build_dir='{local.build.root}', dry_run=False, echo=Fals
     if dry_run:
         printer.debug('[DRY RUN]', ' '.join(cmd))
     else:
+        if not os.path.exists(local_build_dir):
+            os.makedirs(local_build_dir)
         local(config, cmd, echo=echo, hide=hide)
