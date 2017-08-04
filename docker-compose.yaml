@@ -23,7 +23,7 @@ services:
             - campusmap-postgres-data:/var/lib/postgresql/data
 
     geoserver:
-        image: psuoitwdt/geoserver
+        image: psuoitwdt/geoserver:2.11.2
         networks:
             - campusmap
         ports:
