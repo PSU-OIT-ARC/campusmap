@@ -7,6 +7,9 @@ from django.dispatch import receiver
 
 class Building(models.Model):
 
+    class Meta:
+        ordering = ['name']
+
     name = models.CharField(max_length=255)
     short_name = models.CharField(max_length=255)
 

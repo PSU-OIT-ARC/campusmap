@@ -4,6 +4,7 @@ from django.contrib.gis.db import models
 class BicycleParking(models.Model):
 
     class Meta:
+        ordering = ['capacity']
         verbose_name_plural = 'bicycle parking'
 
     capacity = models.IntegerField()
@@ -14,6 +15,9 @@ class BicycleParking(models.Model):
 
 
 class BicycleRoute(models.Model):
+
+    class Meta:
+        ordering = ['classification', 'bike_there_classification']
 
     classification = models.CharField(max_length=255, null=True, blank=True, choices=(
         ('BKE-BLVD', 'Bike Boulevard'),
