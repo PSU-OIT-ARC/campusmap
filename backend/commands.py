@@ -67,8 +67,12 @@ def import_gis_data(config, source_dir='../gisdata', app=None, model=None, overw
     importers = sorted(importers, key=lambda importer: importer.__name__)
 
     for importer_class in importers:
-        importer = importer_class(*args, **kwargs)
-        importer.run()
+        try:
+            importer = importer_class(*args, **kwargs)
+        except FileNotFoundError as exc:
+            printer.warning(exc)
+        else:
+            importer.run()
 
 
 # TEMPORARY -----------------------------------------------------------

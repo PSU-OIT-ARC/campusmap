@@ -18,6 +18,10 @@ class Importer(metaclass=abc.ABCMeta):
     def __init__(self, path, filters=None, include_empty=None, source_srid=None, overwrite=False,
                  verbose=False, quiet=False, dry_run=False):
         path = self.normalize_path(path)
+
+        if not os.path.exists(path):
+            raise FileNotFoundError(f'Data source not found: {path}')
+
         if os.path.isdir(path):
             path = self.get_path_from_dir(path)
 
@@ -122,14 +126,15 @@ class ShapefileImporter(Importer):
 
     def get_path_from_dir(self, path):
         base_name = self.model_name_plural.replace(' ', '-')
-        shapefile_path = os.path.join(path, base_name, f'{base_name}.shp')
+        base_dir = os.path.join(path, base_name)
+        shapefile_path = os.path.join(base_dir, f'{base_name}.shp')
 
         # Exact match
         if os.path.isfile(shapefile_path):
             return shapefile_path
 
         # Fuzzy match of *.shp
-        glob_shapefile_path = os.path.join(path, base_name, '*.shp')
+        glob_shapefile_path = os.path.join(base_dir, '*.shp')
         candidates = glob.glob(glob_shapefile_path)
 
         if len(candidates) == 1:
@@ -137,7 +142,8 @@ class ShapefileImporter(Importer):
             return shapefile_path
 
         raise FileNotFoundError(
-            f'No Shapefile found at "{path}"; tried "{shapefile_path}" and {glob_shapefile_path}')
+            f'No Shapefile found for {self.model_name_plural}; tried "{shapefile_path}" and '
+            f'{glob_shapefile_path}')
 
 
 class RLISShapefileImporter(ShapefileImporter):
