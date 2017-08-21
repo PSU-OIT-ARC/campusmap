@@ -21,7 +21,7 @@
         "core-js": "^2.5.0",
         "ol": "^4.3.1",
         "rbush": "^2.0.1",
-        "rxjs": "^5.4.2",
+        "rxjs": "^5.4.3",
         "zone.js": "^0.8.16"
     },
     "devDependencies": {
