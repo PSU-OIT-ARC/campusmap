@@ -19,7 +19,7 @@ class Building(models.Model):
     geom = models.MultiPolygonField(srid=4326)
 
     @property
-    def building_href(self):
+    def building_url(self):
         if not self.code:
             return None
         return posixpath.join('http://www.pdx.edu/floorplans/buildings/', self.code.lower())
