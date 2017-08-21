@@ -1,5 +1,6 @@
 import posixpath
 
+from django.conf import settings
 from django.contrib.gis.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -22,7 +23,7 @@ class Building(models.Model):
     def building_url(self):
         if not self.code:
             return None
-        return posixpath.join('http://www.pdx.edu/floorplans/buildings/', self.code.lower())
+        return posixpath.join(settings.BUILDING_BASE_URL, self.code.lower())
 
     @classmethod
     def normalize_address(cls, address):
