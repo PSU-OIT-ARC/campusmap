@@ -14,7 +14,7 @@ export class SearchResult {
 
 @Injectable()
 export class SearchService {
-    url = `${environment.apiURL}/search`;
+    url = `${environment.apiURL}/search/`;
 
     constructor (private http: Http) {
 

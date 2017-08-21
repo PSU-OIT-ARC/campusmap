@@ -16,7 +16,7 @@ urlpatterns = [
     url(r'^app-config$', views.AppConfigView.as_view(), name='app-config'),
     url(r'^admin/', include(admin.cas_site.urls)),
     url(r'^account/', include(cas_urls)),
-    url(r'^search', include(search_urls)),
+    url(r'^search/', include(search_urls)),
 ]
 
 
