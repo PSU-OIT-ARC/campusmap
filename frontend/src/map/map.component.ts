@@ -120,7 +120,7 @@ export class MapComponent implements OnInit {
 
     makeFeatureLayers () {
         return [
-            this.makeFeatureLayer('buildings', {
+            this.makeFeatureLayer('buildings.building', {
                 style: new Style({
                     fill: new Fill({
                         color: colorsRGB.psuGreen.concat([0.6])
@@ -131,8 +131,8 @@ export class MapComponent implements OnInit {
                     })
                 })
             }),
-            this.makeTileLayer('bicycle-routes', {maxResolution: 2}),
-            this.makeFeatureLayer('bicycle-parking', {
+            this.makeTileLayer('bicycles.bicycleroute', {maxResolution: 2}),
+            this.makeFeatureLayer('bicycles.bicycleparking', {
                 style: new Style({
                     image: new Circle({
                         fill: new Fill({

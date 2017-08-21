@@ -92,20 +92,25 @@ not, some of this will need to be adjusted slightly.
   - user: ``campusmap``
   - password: [leave blank]
 
-- Create a ``buildings`` layer from ``campusmap:campusmap``
+- Create a building layer from the ``campusmap:campusmap`` workspace
 
   - Find the ``buildings_building`` table in the list and click the ``Publish``
     link
-  - Set the layer's name to ``buildings``
+  - Set the layer's name to ``buildings.building``
   - Set the layer's title to ``Buildings``
   - Click the ``Compute from data`` and ``Compute from native bounds`` links
 
-- Create a ``bicycle-parking`` layer from ``campusmap:campusmap`` by repeating
-  the above steps for the ``bicycles_bicycleroute`` table
+- Create a bike parking layer by repeating the above steps for the
+  ``bicycles_bicycleparking`` table
 
-- Create a ``bicycle-routes`` layer from ``campusmap:campusmap`` by repeating
-  the above steps for the ``bicycles_bicycleroute`` table
+  - Set the layer's name to ``bicycles.bicycleparking``
+  - Set the layer's title to ``Bike Parking``
 
+- Create a bike route layer by repeating the above steps for the
+  ``bicycles_bicycleroute`` table
+
+  - Set the layer's name to ``bicycles.bicycleroute``
+  - Set the layer's title to ``Bike Routes``
   - Create a custom style by clicking on ``Add new style`` under ``Styles`` and
     upload the ``style.sld`` file from the repo.
   - Assign this style by setting Default style in the ``bicycle-routes``
