@@ -16,7 +16,7 @@ setup(
         'django-arcutils>=2.23.0',
         'django-local-settings>=1.0b7',
         'django-pgcli>=0.0.2',
-        'djangorestframework>=3.6.3',
+        'djangorestframework>=3.6.4',
         'Markdown>=2.6.8',
         'psycopg2>=2.7.3',
         'psu.oit.arc.tasks',
