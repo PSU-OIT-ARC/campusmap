@@ -75,7 +75,6 @@ export class MapComponent implements OnInit {
 
         this.map = map;
         this.baseLayers = baseLayers;
-        this.addEventListeners(map);
         this.addInteractions(map, baseLayers, featureLayers);
 
         map.getView().fit(mapExtent);
@@ -255,7 +254,7 @@ export class MapComponent implements OnInit {
     }
 
     makeBuildingSelectInteraction (layer) {
-        return new SelectInteraction({
+        let interaction = new SelectInteraction({
             condition: condition.pointerDown,
             toggleCondition: condition.never,
             layers: [layer],
@@ -269,20 +268,16 @@ export class MapComponent implements OnInit {
                 }),
             })
         });
-    }
 
-    addEventListeners (map: Map) {
-        map.on('click', (event) => {
-            let feature = map.forEachFeatureAtPixel(event.pixel, (feature) => {
-                return feature;
-            });
-            if (feature && typeof feature.getId() !== 'undefined') {
-                this.showFeatureInfo(feature);
-            }
-            else {
+        interaction.on('select', event => {
+            if (event.selected.length) {
+                this.showFeatureInfo(event.selected[0]);
+            } else {
                 this.hideFeatureInfo();
             }
-        })
+        });
+
+        return interaction;
     }
 
     addInteractions (map: Map, baseLayers, featureLayers) {
