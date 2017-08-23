@@ -38,7 +38,7 @@ class SearchView(BaseSearchView):
         if not term:
             raise ParseError('Blank query parameter: q')
         queryset = Building.objects.filter(Q(name__icontains=term) | Q(code__icontains=term))
-        results = queryset.all()
+        results = queryset[:5]
         if not len(results):
             raise NotFound(self.not_found_message.format_map(locals()))
         return self.get_response(results)
