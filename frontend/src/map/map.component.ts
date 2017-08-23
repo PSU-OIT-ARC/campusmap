@@ -219,6 +219,7 @@ export class MapComponent implements OnInit {
         let selectCache = {};
         return new SelectInteraction({
             condition: condition.pointerMove,
+            toggleCondition: condition.never,
             layers: [layer],
             style: (feature) => {
                 const props = feature.getProperties();
@@ -256,6 +257,7 @@ export class MapComponent implements OnInit {
     makeBuildingSelectInteraction (layer) {
         return new SelectInteraction({
             condition: condition.pointerDown,
+            toggleCondition: condition.never,
             layers: [layer],
             style: (feature) => {
                 const props = feature.getProperties();
