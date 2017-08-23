@@ -326,28 +326,61 @@ export class MapComponent implements OnInit {
     showFeatureInfo (feature) {
         const id = feature.getId();
         this.searchService.searchById(id, true);
-        // XXX: Magic number
-        this.centerMapOnFeature(feature, 400);
+        this.centerMapOnFeature(feature, {
+            top: 30,
+            right: 30,
+            bottom: 30,
+            left: 430
+        });
     }
 
-    centerMapOnFeature (feature, threshold) {
+    centerMapOnFeature (feature, threshold: CenteringThreshold) {
         const map = this.map;
         const size = map.getSize();
         const width = size[0];
-        if (width >= threshold) {
-            const featureExtent = feature.getGeometry().getExtent();
-            const leftPixel = map.getPixelFromCoordinate([featureExtent[0], featureExtent[1]]);
-            const leftEdge = leftPixel[0];
-            if (leftEdge < threshold) {
-                const featureCenter = extent.getCenter(featureExtent);
-                const featureCenterPixel = map.getPixelFromCoordinate(featureCenter);
-                const newX = featureCenterPixel[0] - threshold / 2;
-                const newCenter = map.getCoordinateFromPixel([newX, featureCenterPixel[1]]);
-                map.getView().animate({
-                    center: newCenter,
-                    duration: 400
-                });
-            }
+        const height = size[1];
+
+        const featureExtent = feature.getGeometry().getExtent();
+        const topRightCoord = extent.getTopRight(featureExtent);
+        const bottomLeftCoord = extent.getBottomLeft(featureExtent);
+        const featureCenter = extent.getCenter(featureExtent);
+
+        const topRightPixel = map.getPixelFromCoordinate(topRightCoord);
+        const bottomLeftPixel = map.getPixelFromCoordinate(bottomLeftCoord);
+        const featureCenterPixel = map.getPixelFromCoordinate(featureCenter);
+        const featureX = featureCenterPixel[0];
+        const featureY = featureCenterPixel[1];
+
+        const top = topRightPixel[1];
+        const right = topRightPixel[0];
+        const bottom = bottomLeftPixel[1];
+        const left = bottomLeftPixel[0];
+
+        const defaultNewX = featureX - (threshold.left - threshold.right) / 2;
+        const defaultNewY = featureY - (threshold.top - threshold.bottom) / 2;
+
+        let newX = null;
+        let newY = null;
+
+        if ((height >= threshold.top && top < threshold.top) ||
+            (height >= threshold.bottom && bottom > (height - threshold.bottom))) {
+            newY = defaultNewY;
+        }
+
+        if ((width >= threshold.left && left < threshold.left) ||
+            (width >= threshold.right && right > (width - threshold.right))) {
+            newX = defaultNewX;
+        }
+
+        if (!(newX === null && newY === null)) {
+            const newCenter = map.getCoordinateFromPixel([
+                newX === null ? defaultNewX : newX,
+                newY === null ? defaultNewY : newY
+            ]);
+            map.getView().animate({
+                center: newCenter,
+                duration: 400
+            });
         }
     }
 
@@ -359,4 +392,11 @@ export class MapComponent implements OnInit {
         selected.map((select) => select.getFeatures().clear());
         this.sidenavService.close();
     }
+}
+
+class CenteringThreshold {
+    top?: number = 0;
+    right?: number = 0;
+    bottom?: number = 0;
+    left?: number = 0;
 }
