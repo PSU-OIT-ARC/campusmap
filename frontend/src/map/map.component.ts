@@ -259,21 +259,15 @@ export class MapComponent implements OnInit {
             condition: condition.pointerDown,
             toggleCondition: condition.never,
             layers: [layer],
-            style: (feature) => {
-                const props = feature.getProperties();
-                const name = props.name;
-                const code = props.code;
-                let style = new Style({
-                    fill: new Fill({
-                        color: colorsHex.psuGray
-                    }),
-                    stroke: new Stroke({
-                        color: 'white',
-                        width: 4
-                    }),
-                });
-                return [style];
-            }
+            style: new Style({
+                fill: new Fill({
+                    color: colorsHex.psuGray
+                }),
+                stroke: new Stroke({
+                    color: 'white',
+                    width: 4
+                }),
+            })
         });
     }
 
