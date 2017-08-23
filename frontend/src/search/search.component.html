@@ -1,13 +1,33 @@
-<form (ngSubmit)="search(searchTerm.value)" fxLayout="row">
-    <input #searchTerm (keyup)="search(searchTerm.value)" fxFlex>
+<form (ngSubmit)="search(searchTerm, true)">
+    <div fxLayout="row">
+        <input name="term"
+               autocomplete="off"
+               [(ngModel)]="searchTerm"
+               (focus)="showResults = true"
+               (keyup)="handleKeyUp(searchTerm)"
+               fxFlex>
 
-    <button type="reset" title="Clear search terms"
-            *ngIf="searchTerm.value" (click)="reset();"
-            md-icon-button>
-        <md-icon>clear</md-icon>
-    </button>
+        <button type="reset" title="Clear search terms"
+                *ngIf="searchTerm" (click)="reset();"
+                md-icon-button>
+            <md-icon>clear</md-icon>
+        </button>
 
-    <button type="submit" title="Search"  md-icon-button [disabled]="!searchTerm.value">
-        <md-icon>search</md-icon>
-    </button>
+        <button type="submit" title="Search"  md-icon-button [disabled]="!searchTerm">
+            <md-icon>search</md-icon>
+        </button>
+    </div>
+
+    <md-nav-list class="results" *ngIf="results?.length && showResults">
+        <md-list-item class="result"
+                      *ngFor="let result of results"
+                      (click)="showResult(result)">
+            <a md-line>{{ result.name }}</a>
+            <md-icon>place</md-icon>
+        </md-list-item>
+    </md-nav-list>
+
+    <div class="results error" *ngIf="error && showResults">
+        {{ error.message }}
+    </div>
 </form>

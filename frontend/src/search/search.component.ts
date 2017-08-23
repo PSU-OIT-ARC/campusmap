@@ -1,15 +1,11 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, ElementRef, Input, OnInit } from '@angular/core';
 
-import 'rxjs/add/observable/of';
-import 'rxjs/add/operator/catch';
+import 'rxjs/add/operator/do';
 import 'rxjs/add/operator/debounceTime';
-import 'rxjs/add/operator/distinctUntilChanged';
-import 'rxjs/add/operator/switchMap';
-import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 
 import { SidenavService } from '../sidenav/sidenav.service';
-import { SearchResult, SearchService } from './search.service';
+import { SearchError, SearchResult, SearchService } from './search.service';
 import { SidenavBodyComponent } from '../sidenav/sidenav-body.component';
 
 
@@ -18,97 +14,97 @@ import { SidenavBodyComponent } from '../sidenav/sidenav-body.component';
     templateUrl: './search.component.html',
     styleUrls: [
         './search.component.scss'
-    ],
-    providers: [
-        SearchService
     ]
 })
 export class SearchComponent implements OnInit {
     private searchTerms = new Subject<string>();
 
-    results: Observable<SearchResult[]>;
+    public searchTerm = null;
 
-    error: {
-        status: number,
-        message: string
-    };
+    public error: SearchError;
+    public results: SearchResult[];
+    public showResults = false;
 
     constructor (
+        private host: ElementRef,
         private sidenavService: SidenavService,
         private searchService: SearchService) {
 
     }
 
     ngOnInit (): void {
-        this.results = this.searchTerms
-            .debounceTime(300)
-            .distinctUntilChanged()
-            .switchMap(term => {
-                if (term) {
-                    return this.searchService.search(term)
-                        .map(results => {
-                            this.error = null;
-                            this.sidenavService.setState({
-                                content: {
-                                    bodyComponent: SearchResultsComponent,
-                                    bodyContext: {
-                                        results: results,
-                                        ess: results.length === 1 ? '' : 's'
-                                    }
-                                },
-                                open: true,
-                                closeable: false
-                            });
-                            return results;
-                        })
-                        .catch(error => {
-                            this.error = error;
-                            this.sidenavService.setState({
-                                content: {
-                                    bodyComponent: SearchErrorComponent,
-                                    bodyContext: {
-                                        error: error
-                                    }
-                                },
-                                open: true,
-                                closeable: false
-                            });
-                            return [];
-                        });
-                }
-                this.error = null;
-                return [];
-            });
-        this.results.subscribe();
+        this.searchService.error.subscribe(error => {
+            this.error = error;
+            this.results = null;
+        });
+
+        this.searchService.results.subscribe(results => {
+            this.error = null;
+            this.results = results;
+            if (this.searchService.explicit && results.length === 1) {
+                this.showResult(results[0]);
+            }
+        });
+
+        this.searchService.term.subscribe(term => this.searchTerm = term);
+
+        this.searchTerms
+            .debounceTime(200)
+            .do(term => this.search(term, false))
+            .subscribe();
+
+        document.addEventListener('click', event => {
+            this.showResults = this.host.nativeElement.contains(event.target);
+        });
     }
 
-    search (term: string): void {
+    handleKeyUp (term): void {
         this.searchTerms.next(term);
     }
 
+    search (term, explicit=false) {
+        this.error = null;
+        this.results = null;
+        if (term) {
+            this.searchService.search(term, explicit);
+        }
+    }
+
     reset () {
+        this.error = null;
+        this.results = null;
+        this.showResults = false;
         this.searchTerms.next(null);
         this.sidenavService.close();
+    }
+
+    showResult (result) {
+        this.results = [result];
+        this.showResults = false;
+        this.searchService.setTerm(result.name);
+        this.sidenavService.setState({
+            content: {
+                title: result.name,
+                subtitle: result.code,
+                bodyComponent: SearchResultComponent,
+                bodyContext: result
+            },
+            open: true,
+            closeable: false
+        });
     }
 }
 
 
 @Component({
-    selector: 'psu-campusmap-search-results',
-    templateUrl: './search.results.html'
+    selector: 'psu-campusmap-search-result',
+    templateUrl: './search.result.html',
+    styles: [`
+        .search-result {
+            padding: 0 16px;
+        }
+    `]
 })
-export class SearchResultsComponent implements SidenavBodyComponent {
-    @Input() context: any;
-}
-
-
-@Component({
-    selector: 'psu-campusmap-search-error',
-    template: '<div class="error">{{ context.error.message }}</div>',
-    styles: [
-        '.error { color: red; }'
-    ]
-})
-export class SearchErrorComponent implements SidenavBodyComponent {
+export class SearchResultComponent implements SidenavBodyComponent {
     @Input() context: any;
 }

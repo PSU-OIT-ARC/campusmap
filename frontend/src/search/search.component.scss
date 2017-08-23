@@ -23,6 +23,16 @@ form {
         font-size: 16px;
     }
 
+    .results {
+        border-top: 1px solid lightgray;
+    }
+
+    .error {
+        color: red;
+        font-size: 110%;
+        padding: 16px;
+    }
+
     @media (max-width: $xs-breakpoint) {
         top: $toolbar-height-sm + $half-standard-padding;
         left: $half-standard-padding;

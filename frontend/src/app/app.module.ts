@@ -22,8 +22,7 @@ import { MapComponent } from '../map/map.component';
 import { MapFeatureInfoComponent } from '../map/feature-info.component';
 import {
     SearchComponent,
-    SearchErrorComponent,
-    SearchResultsComponent
+    SearchResultComponent
 } from '../search/search.component';
 import { SidenavComponent } from '../sidenav/sidenav.component';
 
@@ -31,6 +30,7 @@ import { SidenavBodyDirective } from '../sidenav/sidenav-body.directive';
 
 import { SearchService } from '../search/search.service';
 import { SidenavService } from '../sidenav/sidenav.service';
+
 
 @NgModule({
     imports: [
@@ -56,15 +56,13 @@ import { SidenavService } from '../sidenav/sidenav.service';
         MapComponent,
         MapFeatureInfoComponent,
         SearchComponent,
-        SearchErrorComponent,
-        SearchResultsComponent,
+        SearchResultComponent,
         SidenavBodyDirective,
         SidenavComponent
     ],
     entryComponents: [
         MapFeatureInfoComponent,
-        SearchErrorComponent,
-        SearchResultsComponent
+        SearchResultComponent
     ],
     providers: [
         SearchService,

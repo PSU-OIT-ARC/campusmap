@@ -1,0 +1,6 @@
+<div class="search-result">
+    <p *ngIf="context.address">{{ context.address }}</p>
+    <p *ngIf="context.building_url">
+        <a href="{{ context.building_url }}">Building info & floorplans</a>
+    </p>
+</div>
