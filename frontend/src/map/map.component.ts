@@ -30,11 +30,10 @@ import Text from 'ol/style/text';
 import { colorsHex, colorsRGB } from '../constants';
 import { environment } from '../environments/environment';
 
+import { SearchService } from '../search/search.service';
 import { SidenavService } from '../sidenav/sidenav.service';
-import { MapFeatureInfoComponent } from './feature-info.component';
 
 
-const floorplanBaseURL = 'http://www.pdx.edu/floorplans/buildings/';
 const epsg = 'EPSG:3857';
 const projection = proj.get(epsg);
 const mapExtent = [-13657661.739414563, 5700905.92043886, -13655116.88116592, 5702920.846916851];
@@ -54,6 +53,7 @@ export class MapComponent implements OnInit {
 
     constructor (
         private host: ElementRef,
+        private searchService: SearchService,
         private sidenavService: SidenavService) {
         // Pass
     }
@@ -324,42 +324,24 @@ export class MapComponent implements OnInit {
     }
 
     showFeatureInfo (feature) {
+        const id = feature.getId();
+        this.searchService.searchById(id, true);
         // XXX: Magic number
-        const sidenavWidth = 400;
+        this.centerMapOnFeature(feature, 400);
+    }
 
+    centerMapOnFeature (feature, threshold) {
         const map = this.map;
         const size = map.getSize();
         const width = size[0];
-
-        const props = feature.getProperties();
-        const address = props.address;
-        const buildingHref = props.code ? `${floorplanBaseURL}${props.code.toLowerCase()}` : null;
-
-        const sidenavState = {
-            content: {
-                title: props.name,
-                subtitle: props.code,
-                bodyComponent: MapFeatureInfoComponent,
-                bodyContext: {
-                    name: props.name,
-                    address: address,
-                    buildingHref: buildingHref
-                }
-            },
-            open: true,
-            closeable: true
-        };
-
-        this.sidenavService.setState(sidenavState);
-
-        if (width >= sidenavWidth) {
+        if (width >= threshold) {
             const featureExtent = feature.getGeometry().getExtent();
             const leftPixel = map.getPixelFromCoordinate([featureExtent[0], featureExtent[1]]);
             const leftEdge = leftPixel[0];
-            if (leftEdge < sidenavWidth) {
+            if (leftEdge < threshold) {
                 const featureCenter = extent.getCenter(featureExtent);
                 const featureCenterPixel = map.getPixelFromCoordinate(featureCenter);
-                const newX = featureCenterPixel[0] - sidenavWidth / 2;
+                const newX = featureCenterPixel[0] - threshold / 2;
                 const newCenter = map.getCoordinateFromPixel([newX, featureCenterPixel[1]]);
                 map.getView().animate({
                     center: newCenter,

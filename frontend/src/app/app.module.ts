@@ -19,7 +19,6 @@ import {
 import { AppComponent } from './app.component';
 import { AppToolbarComponent } from './toolbar.component';
 import { MapComponent } from '../map/map.component';
-import { MapFeatureInfoComponent } from '../map/feature-info.component';
 import {
     SearchComponent,
     SearchResultComponent
@@ -54,14 +53,12 @@ import { SidenavService } from '../sidenav/sidenav.service';
         AppComponent,
         AppToolbarComponent,
         MapComponent,
-        MapFeatureInfoComponent,
         SearchComponent,
         SearchResultComponent,
         SidenavBodyDirective,
         SidenavComponent
     ],
     entryComponents: [
-        MapFeatureInfoComponent,
         SearchResultComponent
     ],
     providers: [
