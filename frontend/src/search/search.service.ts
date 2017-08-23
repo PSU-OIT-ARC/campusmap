@@ -1,11 +1,17 @@
 import { Injectable } from '@angular/core';
-import { Http } from '@angular/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
 import 'rxjs/add/observable/throw';
 import 'rxjs/add/operator/map';
 import { Observable } from 'rxjs/Observable';
 
 import { environment } from '../environments/environment';
+
+
+export class SearchResponse {
+    results: any[];
+    count: number;
+}
 
 export class SearchResult {
     id: number;
@@ -16,15 +22,16 @@ export class SearchResult {
 export class SearchService {
     url = `${environment.apiURL}/search/`;
 
-    constructor (private http: Http) {
+    constructor (private http: HttpClient) {
 
     }
 
     search (term): Observable<SearchResult[]> {
-        return this.http
-            .get(this.url, {params: {q: term}})
+        let url = this.url;
+        let params = new HttpParams().set('q', term);
+        return this.http.get<SearchResponse>(url, { params })
             .map(response => {
-                return response.json().results as SearchResult[];
+                return response.results as SearchResult[];
             })
             .catch(error => {
                 let message;
