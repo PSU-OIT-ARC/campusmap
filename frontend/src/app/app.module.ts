@@ -12,7 +12,9 @@ import {
     MdInputModule,
     MdListModule,
     MdMenuModule,
+    MdProgressSpinnerModule,
     MdSidenavModule,
+    MdSnackBarModule,
     MdToolbarModule
 } from '@angular/material';
 
@@ -47,7 +49,9 @@ import { SidenavService } from '../sidenav/sidenav.service';
         MdInputModule,
         MdListModule,
         MdMenuModule,
+        MdProgressSpinnerModule,
         MdSidenavModule,
+        MdSnackBarModule,
         MdToolbarModule
     ],
     declarations: [

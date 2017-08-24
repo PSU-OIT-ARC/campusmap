@@ -32,6 +32,12 @@
         margin-bottom: 0;
     }
 
+    .map-control md-spinner {
+        padding: 5px;
+        width: 30px;
+        height: 30px;
+    }
+
     &.top-right {
         top: $standard-padding;
         right: $standard-padding;

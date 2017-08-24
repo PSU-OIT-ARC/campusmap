@@ -9,6 +9,20 @@
         </div>
 
         <div class="map-control">
+            <button title="Go to my current location"
+                     *ngIf="!gettingCurrentPosition"
+                    (click)="goToMyLocation()"
+                    [disabled]="!geolocationEnabled"
+                    md-icon-button>
+                <md-icon>my_location</md-icon>
+            </button>
+
+            <md-spinner *ngIf="gettingCurrentPosition"
+                        mode="indeterminate"
+                        color="accent"></md-spinner>
+        </div>
+
+        <div class="map-control">
             <button title="Zoom in"
                     md-icon-button
                     (click)="zoomIn()">

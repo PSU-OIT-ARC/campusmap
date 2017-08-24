@@ -1,5 +1,7 @@
 import { Component, ElementRef, OnInit } from '@angular/core';
 
+import { MdSnackBar } from '@angular/material';
+
 import condition from 'ol/events/condition';
 
 import Map from 'ol/map';
@@ -44,8 +46,12 @@ export class MapComponent implements OnInit {
     highlightInteraction: SelectInteraction;
     selectInteraction: SelectInteraction;
 
+    geolocationEnabled = navigator.geolocation;
+    gettingCurrentPosition = false;
+
     constructor (
         private host: ElementRef,
+        private snackBar: MdSnackBar,
         private mapService: MapService,
         private searchService: SearchService,
         private sidenavService: SidenavService) {
@@ -238,6 +244,22 @@ export class MapComponent implements OnInit {
         );
         selected.map((select) => select.getFeatures().clear());
         this.sidenavService.close();
+    }
+
+    goToMyLocation () {
+        this.gettingCurrentPosition = true;
+        navigator.geolocation.getCurrentPosition(position => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            const center = this.mapService.transform([longitude, latitude]);
+            this.gettingCurrentPosition = false;
+            this.view.animate({ center, duration: 400 });
+        }, error => {
+            this.gettingCurrentPosition = false;
+            this.snackBar.open('Unable to get your current location', 'OK', {
+                duration: 5000
+            })
+        });
     }
 
     zoomIn () {
