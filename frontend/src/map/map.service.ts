@@ -9,6 +9,8 @@ import View from 'ol/view';
 
 import GeoJSONFormat from 'ol/format/geojson';
 
+import SelectInteraction from 'ol/interaction/select';
+
 import TileWMSSource from 'ol/source/tilewms';
 import VectorSource from 'ol/source/vector';
 import TileLayer from 'ol/layer/tile';
@@ -108,6 +110,15 @@ export class MapService {
             }
         }
         return null;
+    }
+
+    selectFeature (interactionName, feature) {
+        const select = this.getInteraction(interactionName, SelectInteraction);
+        const selectCollection = select.getFeatures();
+        selectCollection.clear();
+        if (feature) {
+            selectCollection.push(feature);
+        }
     }
 
     centerMapOnFeature (feature: Feature, threshold=new CenteringThreshold(), zoomIn=true,
