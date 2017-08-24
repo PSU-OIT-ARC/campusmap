@@ -1,43 +1,30 @@
 import { Component, ElementRef, OnInit } from '@angular/core';
 
-
-import extent from 'ol/extent';
 import condition from 'ol/events/condition';
-import loadingstrategy from 'ol/loadingstrategy';
-import proj from 'ol/proj';
 
 import Map from 'ol/map';
 import View from 'ol/view';
 
-import GeoJSON from 'ol/format/geojson';
+import TileLayer from 'ol/layer/tile';
+import VectorLayer from 'ol/layer/vector';
 
 import SelectInteraction from 'ol/interaction/select';
 
 import BingMapsSource from 'ol/source/bingmaps';
 import OSMSource from 'ol/source/osm';
-import TileWMSSource from 'ol/source/tilewms';
-import VectorSource from 'ol/source/vector';
 
-import TileLayer from 'ol/layer/tile';
-import VectorLayer from 'ol/layer/vector';
-
+import Circle from 'ol/style/circle';
 import Fill from 'ol/style/fill';
 import Stroke from 'ol/style/stroke';
-import Circle from 'ol/style/circle';
 import Style from 'ol/style/style';
 import Text from 'ol/style/text';
 
 import { colorsHex, colorsRGB } from '../constants';
 import { environment } from '../environments/environment';
 
+import { MapService } from './map.service';
 import { SearchService } from '../search/search.service';
 import { SidenavService } from '../sidenav/sidenav.service';
-
-
-const epsg = 'EPSG:3857';
-const projection = proj.get(epsg);
-const mapExtent = [-13657661.739414563, 5700905.92043886, -13655116.88116592, 5702920.846916851];
-const center = extent.getCenter(mapExtent);
 
 
 @Component({
@@ -49,35 +36,44 @@ const center = extent.getCenter(mapExtent);
 })
 export class MapComponent implements OnInit {
     map: Map;
-    baseLayers: Array<any>;
+    view: View;
+
+    baseLayers: TileLayer[];
+    featureLayers: VectorLayer[];
+
+    highlightInteraction: SelectInteraction;
+    selectInteraction: SelectInteraction;
 
     constructor (
         private host: ElementRef,
+        private mapService: MapService,
         private searchService: SearchService,
         private sidenavService: SidenavService) {
-        // Pass
+
+        this.map = mapService.map;
+        this.view = mapService.view;
+
+        this.baseLayers = this.makeBaseLayers();
+        this.featureLayers = this.makeFeatureLayers();
+
+        const buildingLayer = this.featureLayers[0];
+
+        this.highlightInteraction = this.makeHighlightInteraction(buildingLayer);
+        this.selectInteraction = this.makeSelectInteraction(buildingLayer);
     }
 
     ngOnInit () {
-        const baseLayers = this.makeBaseLayers();
-        const featureLayers = this.makeFeatureLayers();
-        const allLayers = baseLayers.concat(featureLayers);
+        const map = this.map;
+        const target = this.host.nativeElement.querySelector('.map');
 
-        const map = new Map({
-            target: this.host.nativeElement.querySelector('.map'),
-            controls: [],
-            layers: allLayers,
-            view: new View({
-                center: center,
-                zoom: 16
-            })
-        });
+        this.baseLayers.forEach(layer => map.addLayer(layer));
+        this.featureLayers.forEach(layer => map.addLayer(layer));
 
-        this.map = map;
-        this.baseLayers = baseLayers;
-        this.addInteractions(map, baseLayers, featureLayers);
+        map.addInteraction(this.selectInteraction);
+        map.addInteraction(this.highlightInteraction);
 
-        map.getView().fit(mapExtent);
+        map.setTarget(target)
+        this.zoomToFullExtent();
     }
 
     makeBaseLayers () {
@@ -119,7 +115,7 @@ export class MapComponent implements OnInit {
 
     makeFeatureLayers () {
         return [
-            this.makeFeatureLayer('buildings.building', {
+            this.mapService.makeFeatureLayer('buildings.building', {
                 style: new Style({
                     fill: new Fill({
                         color: colorsRGB.psuGreen.concat([0.6])
@@ -130,8 +126,8 @@ export class MapComponent implements OnInit {
                     })
                 })
             }),
-            this.makeTileLayer('bicycles.bicycleroute', {maxResolution: 2}),
-            this.makeFeatureLayer('bicycles.bicycleparking', {
+            this.mapService.makeTileLayer('bicycles.bicycleroute', {maxResolution: 2}),
+            this.mapService.makeFeatureLayer('bicycles.bicycleparking', {
                 style: new Style({
                     image: new Circle({
                         fill: new Fill({
@@ -156,65 +152,7 @@ export class MapComponent implements OnInit {
         ];
     }
 
-    makeFeatureLayer (layerName, options: {
-        minResolution?: Number,
-        maxResolution?: Number,
-        style?: Style
-    }) {
-        return new VectorLayer({
-            source: this.makeWFSSource(layerName),
-            minResolution: options.minResolution,
-            maxResolution: options.maxResolution,
-            style: options.style
-        })
-    }
-
-    makeWFSSource (layerName) {
-        const wfsURL = [
-            `${environment.map.server.baseURL}/campusmap/wfs`, [
-                'service=WFS',
-                'version=1.1.0',
-                'request=GetFeature',
-                `srsname=${epsg}`,
-                'outputFormat=application/json'
-            ].join('&')
-        ].join('?');
-
-        return new VectorSource({
-            format: new GeoJSON(),
-            projection: projection,
-            strategy: loadingstrategy.bbox,
-            url: (extent) => {
-                const bbox = `${extent.join(',')},${epsg}`;
-                return `${wfsURL}&bbox=${bbox}&typename=campusmap:${layerName}`;
-            }
-        });
-    }
-
-    makeTileLayer (layerName, options: {
-        minResolution?: Number,
-        maxResolution?: Number,
-    }) {
-        return new TileLayer({
-            source: this.makeTileSource(layerName),
-            minResolution: options.minResolution,
-            maxResolution: options.maxResolution
-        });
-    }
-
-    makeTileSource (layerName) {
-        const wmsURL = `${environment.map.server.baseURL}/campusmap/wms`;
-
-        return new TileWMSSource({
-            serverType: 'geoserver',
-            url: wmsURL,
-            params: {
-                LAYERS: `campusmap:${layerName}`
-            }
-        });
-    }
-
-    makeBuildingHighlighterInteraction (layer) {
+    makeHighlightInteraction (layer) {
         let selectCache = {};
         return new SelectInteraction({
             condition: condition.pointerMove,
@@ -253,7 +191,7 @@ export class MapComponent implements OnInit {
         });
     }
 
-    makeBuildingSelectInteraction (layer) {
+    makeSelectInteraction (layer) {
         let interaction = new SelectInteraction({
             condition: condition.pointerDown,
             toggleCondition: condition.never,
@@ -280,14 +218,6 @@ export class MapComponent implements OnInit {
         return interaction;
     }
 
-    addInteractions (map: Map, baseLayers, featureLayers) {
-        const buildingLayer = featureLayers[0];
-        const buildingSelector = this.makeBuildingSelectInteraction(buildingLayer);
-        const buildingHighlighter = this.makeBuildingHighlighterInteraction(buildingLayer);
-        map.addInteraction(buildingSelector);
-        map.addInteraction(buildingHighlighter);
-    }
-
     switchBaseLayer (layer) {
         const label = layer.get('label');
         this.baseLayers.forEach((layer) => {
@@ -295,84 +225,15 @@ export class MapComponent implements OnInit {
         })
     }
 
-    zoomIn (levels: number = 1) {
-        this.zoomRelative(levels);
-    }
-
-    zoomOut (levels: number = 1) {
-        this.zoomRelative(-levels);
-    }
-
-    zoomRelative (delta: number) {
-        const view = this.map.getView();
-        const currentZoom = view.getZoom();
-        const newZoom = currentZoom + delta;
-        view.setZoom(newZoom);
-    }
-
-    zoomToFullExtent () {
-        this.map.getView().fit(mapExtent);
-    }
-
     showFeatureInfo (feature) {
         const id = feature.getId();
         this.searchService.searchById(id, true);
-        this.centerMapOnFeature(feature, {
+        this.mapService.centerMapOnFeature(feature, {
             top: 30,
             right: 30,
             bottom: 30,
             left: 430
         });
-    }
-
-    centerMapOnFeature (feature, threshold: CenteringThreshold) {
-        const map = this.map;
-        const size = map.getSize();
-        const width = size[0];
-        const height = size[1];
-
-        const featureExtent = feature.getGeometry().getExtent();
-        const topRightCoord = extent.getTopRight(featureExtent);
-        const bottomLeftCoord = extent.getBottomLeft(featureExtent);
-        const featureCenter = extent.getCenter(featureExtent);
-
-        const topRightPixel = map.getPixelFromCoordinate(topRightCoord);
-        const bottomLeftPixel = map.getPixelFromCoordinate(bottomLeftCoord);
-        const featureCenterPixel = map.getPixelFromCoordinate(featureCenter);
-        const featureX = featureCenterPixel[0];
-        const featureY = featureCenterPixel[1];
-
-        const top = topRightPixel[1];
-        const right = topRightPixel[0];
-        const bottom = bottomLeftPixel[1];
-        const left = bottomLeftPixel[0];
-
-        const defaultNewX = featureX - (threshold.left - threshold.right) / 2;
-        const defaultNewY = featureY - (threshold.top - threshold.bottom) / 2;
-
-        let newX = null;
-        let newY = null;
-
-        if ((height >= threshold.top && top < threshold.top) ||
-            (height >= threshold.bottom && bottom > (height - threshold.bottom))) {
-            newY = defaultNewY;
-        }
-
-        if ((width >= threshold.left && left < threshold.left) ||
-            (width >= threshold.right && right > (width - threshold.right))) {
-            newX = defaultNewX;
-        }
-
-        if (!(newX === null && newY === null)) {
-            const newCenter = map.getCoordinateFromPixel([
-                newX === null ? defaultNewX : newX,
-                newY === null ? defaultNewY : newY
-            ]);
-            map.getView().animate({
-                center: newCenter,
-                duration: 400
-            });
-        }
     }
 
     hideFeatureInfo () {
@@ -383,11 +244,16 @@ export class MapComponent implements OnInit {
         selected.map((select) => select.getFeatures().clear());
         this.sidenavService.close();
     }
-}
 
-class CenteringThreshold {
-    top?: number = 0;
-    right?: number = 0;
-    bottom?: number = 0;
-    left?: number = 0;
+    zoomIn () {
+        this.mapService.zoomIn();
+    }
+
+    zoomOut () {
+        this.mapService.zoomOut();
+    }
+
+    zoomToFullExtent () {
+        this.view.fit(environment.map.fullExtent);
+    }
 }

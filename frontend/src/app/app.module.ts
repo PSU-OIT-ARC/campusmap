@@ -27,6 +27,7 @@ import { SidenavComponent } from '../sidenav/sidenav.component';
 
 import { SidenavBodyDirective } from '../sidenav/sidenav-body.directive';
 
+import { MapService } from '../map/map.service';
 import { SearchService } from '../search/search.service';
 import { SidenavService } from '../sidenav/sidenav.service';
 
@@ -62,6 +63,7 @@ import { SidenavService } from '../sidenav/sidenav.service';
         SearchResultComponent
     ],
     providers: [
+        MapService,
         SearchService,
         SidenavService
     ],
