@@ -100,11 +100,14 @@ export class MapService {
         this.view.setZoom(newZoom);
     }
 
-    centerMapOnFeature (feature: Feature, threshold: CenteringThreshold) {
+    centerMapOnFeature (feature: Feature, threshold=new CenteringThreshold(), zoomIn=true,
+                        zoomThreshold=50, maxZoom=18) {
         const map = this.map;
+        const view = this.view;
         const size = map.getSize();
         const width = size[0];
         const height = size[1];
+        const currentZoom = view.getZoom();
 
         const featureExtent = feature.getGeometry().getExtent();
         const topRightCoord = extent.getTopRight(featureExtent);
@@ -121,12 +124,15 @@ export class MapService {
         const right = topRightPixel[0];
         const bottom = bottomLeftPixel[1];
         const left = bottomLeftPixel[0];
+        const featureWidth = right - left;
+        const featureHeight = bottom - top;
 
         const defaultNewX = featureX - (threshold.left - threshold.right) / 2;
         const defaultNewY = featureY - (threshold.top - threshold.bottom) / 2;
 
         let newX = null;
         let newY = null;
+        let newCenter = null;
 
         if ((height >= threshold.top && top < threshold.top) ||
             (height >= threshold.bottom && bottom > (height - threshold.bottom))) {
@@ -139,14 +145,34 @@ export class MapService {
         }
 
         if (!(newX === null && newY === null)) {
-            const newCenter = map.getCoordinateFromPixel([
+            newCenter = map.getCoordinateFromPixel([
                 newX === null ? defaultNewX : newX,
                 newY === null ? defaultNewY : newY
             ]);
-            map.getView().animate({
-                center: newCenter,
-                duration: 400
-            });
+        }
+
+        let animations = [];
+        let anchor = featureCenter;
+        let duration = 400;
+
+        if (newCenter !== null) {
+            animations.push({ center: newCenter, duration });
+        }
+
+        if (zoomIn &&
+            currentZoom < maxZoom &&
+            (featureWidth < zoomThreshold || featureHeight < zoomThreshold)) {
+            let w = featureWidth;
+            let h = featureHeight;
+            let zoom = currentZoom;
+            while (zoom < maxZoom && (w < zoomThreshold || h < zoomThreshold)) {
+                zoom += 1; w *= 2; h *= 2;
+            }
+            animations.push({ zoom, anchor, duration });
+        }
+
+        if (animations.length) {
+            view.animate.apply(view, animations);
         }
     }
 }
