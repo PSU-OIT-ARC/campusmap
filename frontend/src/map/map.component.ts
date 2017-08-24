@@ -229,12 +229,6 @@ export class MapComponent implements OnInit {
     showFeatureInfo (feature) {
         const id = feature.getId();
         this.searchService.searchById(id, true);
-        this.mapService.centerMapOnFeature(feature, {
-            top: 30,
-            right: 30,
-            bottom: 30,
-            left: 430
-        });
     }
 
     hideFeatureInfo () {
