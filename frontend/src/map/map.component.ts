@@ -154,7 +154,7 @@ export class MapComponent implements OnInit {
 
     makeHighlightInteraction (layer) {
         let selectCache = {};
-        return new SelectInteraction({
+        let interaction = new SelectInteraction({
             condition: condition.pointerMove,
             toggleCondition: condition.never,
             layers: [layer],
@@ -189,6 +189,8 @@ export class MapComponent implements OnInit {
                 return [style];
             }
         });
+        interaction.set('name', 'highlight');
+        return interaction;
     }
 
     makeSelectInteraction (layer) {
@@ -206,7 +208,7 @@ export class MapComponent implements OnInit {
                 }),
             })
         });
-
+        interaction.set('name', 'select');
         interaction.on('select', event => {
             if (event.selected.length) {
                 this.showFeatureInfo(event.selected[0]);
@@ -214,7 +216,6 @@ export class MapComponent implements OnInit {
                 this.hideFeatureInfo();
             }
         });
-
         return interaction;
     }
 

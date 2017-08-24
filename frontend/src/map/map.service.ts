@@ -100,6 +100,16 @@ export class MapService {
         this.view.setZoom(newZoom);
     }
 
+    getInteraction (name, type) {
+        const interactions = this.map.getInteractions().getArray();
+        for (let interaction of interactions) {
+            if (interaction instanceof type && interaction.get('name') === name) {
+                return interaction;
+            }
+        }
+        return null;
+    }
+
     centerMapOnFeature (feature: Feature, threshold=new CenteringThreshold(), zoomIn=true,
                         zoomThreshold=50, maxZoom=18) {
         const map = this.map;
