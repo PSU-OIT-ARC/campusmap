@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 
 import extent from 'ol/extent';
 import loadingstrategy from 'ol/loadingstrategy';
+import proj from 'ol/proj';
 
 import Feature from 'ol/feature';
 import Map from 'ol/map';
@@ -87,6 +88,26 @@ export class MapService {
         });
     }
 
+    transform (coordinate, reverse=false) {
+        const projections = this._getTransformProjections(reverse);
+        return proj.transform(coordinate, projections.source, projections.destination);
+    }
+
+    transformExtent (extent, reverse=false) {
+        const projections = this._getTransformProjections(reverse);
+        return proj.transformExtent(extent, projections.source, projections.destination);
+    }
+
+    _getTransformProjections (reverse) {
+        let source = 'EPSG:4326';
+        let destination = environment.map.projectionCode;
+        if (reverse) {
+            let temp = source;
+            source = destination;
+            destination = temp;
+        }
+        return { source, destination };
+    }
 
     zoomIn (levels: number = 1) {
         this.zoomRelative(levels);
