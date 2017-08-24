@@ -162,7 +162,6 @@ export class MapComponent implements OnInit {
                 const id = feature.getId();
                 const props = feature.getProperties();
                 const name = props.name;
-                const code = props.code;
                 let style = selectCache[id];
                 if (typeof style === 'undefined') {
                     selectCache[id] = style = new Style({
@@ -182,7 +181,7 @@ export class MapComponent implements OnInit {
                                 color: 'white',
                                 width: 4
                             }),
-                            text: code ? `${props.name} (${code})` : name,
+                            text: name,
                             textAlign: 'center'
                         })
                     });
