@@ -22,8 +22,6 @@
 .map-controls {
     position: absolute;
     z-index: 1;
-    right: $standard-padding;
-    bottom: $standard-padding;
 
     .map-control {
         background-color: $psu-green;
@@ -32,5 +30,18 @@
     }
     .map-control:last-child {
         margin-bottom: 0;
+    }
+
+    &.top-right {
+        top: $standard-padding;
+        right: $standard-padding;
+    }
+    &.bottom-right {
+        bottom: $standard-padding;
+        right: $standard-padding;
+    }
+    &.bottom-left {
+        bottom: $standard-padding;
+        left: $standard-padding;
     }
 }

@@ -1,22 +1,6 @@
 <div class="map">
-    <div class="map-controls">
-        <div class="map-control map-layer-switcher">
-            <button title="Select base map"
-                    md-icon-button
-                    [mdMenuTriggerFor]="menu">
-                <md-icon>layers</md-icon>
-            </button>
-
-            <md-menu #menu="mdMenu">
-                <button md-menu-item
-                        *ngFor="let layer of baseLayers"
-                        (click)="switchBaseLayer(layer)">
-                    {{ layer.get('label') }}
-                </button>
-            </md-menu>
-        </div>
-
-        <div class="map-control map-full-extent">
+    <div class="map-controls bottom-right">
+        <div class="map-control">
             <button md-icon-button
                     (click)="zoomToFullExtent()">
                 <md-icon>public</md-icon>
@@ -37,6 +21,23 @@
                     (click)="zoomOut()">
                 <md-icon>remove</md-icon>
             </button>
+        </div>
+    </div>
+
+    <div class="map-controls bottom-left">
+        <div class="map-control">
+            <button title="Select base map"
+                    md-icon-button
+                    [mdMenuTriggerFor]="menu">
+                <md-icon>layers</md-icon>
+            </button>
+            <md-menu #menu="mdMenu">
+                <button md-menu-item
+                        *ngFor="let layer of baseLayers"
+                        (click)="switchBaseLayer(layer)">
+                    {{ layer.get('label') }}
+                </button>
+            </md-menu>
         </div>
     </div>
 </div>
