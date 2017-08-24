@@ -167,10 +167,10 @@ export class MapComponent implements OnInit {
                 if (typeof style === 'undefined') {
                     selectCache[id] = style = new Style({
                         fill: new Fill({
-                            color: colorsHex.psuGray
+                            color: colorsRGB.psuGray.concat([0.75])
                         }),
                         stroke: new Stroke({
-                            color: 'white',
+                            color: colorsRGB.psuLightBlue.concat([0.8]),
                             width: 4
                         }),
                         text: new Text({
@@ -199,10 +199,10 @@ export class MapComponent implements OnInit {
             layers: [layer],
             style: new Style({
                 fill: new Fill({
-                    color: colorsHex.psuGray
+                    color: colorsRGB.psuGray.concat([0.75])
                 }),
                 stroke: new Stroke({
-                    color: 'white',
+                    color: colorsRGB.psuLightBlue.concat([0.8]),
                     width: 4
                 }),
             })
