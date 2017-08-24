@@ -159,12 +159,13 @@ export class MapComponent implements OnInit {
             toggleCondition: condition.never,
             layers: [layer],
             style: (feature) => {
+                const id = feature.getId();
                 const props = feature.getProperties();
                 const name = props.name;
                 const code = props.code;
-                let style = selectCache[props.code];
+                let style = selectCache[id];
                 if (typeof style === 'undefined') {
-                    selectCache[code] = style = new Style({
+                    selectCache[id] = style = new Style({
                         fill: new Fill({
                             color: colorsHex.psuGray
                         }),
