@@ -26,7 +26,6 @@ export class SidenavComponent implements OnDestroy {
     title: string;
     subtitle: string;
     context: any;
-    closeable = true;
 
     constructor (
         private componentFactoryResolver: ComponentFactoryResolver,
@@ -35,7 +34,6 @@ export class SidenavComponent implements OnDestroy {
         this.stateSubscription = sidenavService.state.subscribe(
             (state: SidenavState) => {
                 this.updateContent(state.content);
-                this.closeable = state.closeable;
                 if (state.open) {
                     this.open();
                 } else {

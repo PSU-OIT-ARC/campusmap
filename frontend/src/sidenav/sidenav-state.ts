@@ -6,5 +6,4 @@ export class SidenavState {
         bodyContext: any;
     };
     open?: boolean = true;
-    closeable?: boolean = true;
 }

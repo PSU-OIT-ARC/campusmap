@@ -104,8 +104,7 @@ export class SearchComponent implements OnInit {
                 bodyComponent: SearchResultComponent,
                 bodyContext: result
             },
-            open: true,
-            closeable: false
+            open: true
         });
 
         this.mapService.centerMapOnFeature(feature, { top: 50, right: 50, bottom: 50, left: 450 });

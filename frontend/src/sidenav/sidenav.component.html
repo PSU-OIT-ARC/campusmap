@@ -1,11 +1,8 @@
 <md-sidenav #sidenav>
     <div class="container" fxLayout="column">
-        <div class="header" *ngIf="title || closeable || subtitle">
-            <div *ngIf="title || closeable" fxLayout="row" fxLayoutAlign="start center">
+        <div class="header" *ngIf="title || subtitle">
+            <div *ngIf="title" fxLayout="row" fxLayoutAlign="start center">
                 <h2 class="title" fxFlex>{{ title }}</h2>
-                <button *ngIf="closeable" (click)="sidenav.close()" md-icon-button>
-                    <md-icon>close</md-icon>
-                </button>
             </div>
 
             <h3 class="subtitle" *ngIf="subtitle">{{ subtitle }}</h3>
