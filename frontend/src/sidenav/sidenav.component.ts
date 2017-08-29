@@ -1,10 +1,10 @@
-import { Component, ComponentFactoryResolver, OnDestroy, ViewChild } from '@angular/core';
+import { Component, ComponentFactoryResolver, ViewChild } from '@angular/core';
 import { MdSidenav } from '@angular/material';
+
+import { Store } from '../store';
 
 import { SidenavBodyComponent } from './sidenav-body.component';
 import { SidenavBodyDirective } from './sidenav-body.directive';
-import { SidenavService } from './sidenav.service';
-import { SidenavState } from './sidenav-state';
 
 
 @Component({
@@ -14,9 +14,7 @@ import { SidenavState } from './sidenav-state';
         './sidenav.component.scss'
     ],
 })
-export class SidenavComponent implements OnDestroy {
-    private stateSubscription;
-    private openStateSubscription;
+export class SidenavComponent {
 
     @ViewChild('sidenav')
     private sidenav: MdSidenav;
@@ -29,30 +27,11 @@ export class SidenavComponent implements OnDestroy {
 
     constructor (
         private componentFactoryResolver: ComponentFactoryResolver,
-        public sidenavService: SidenavService) {
+        private store: Store) {
 
-        this.stateSubscription = sidenavService.state.subscribe(
-            (state: SidenavState) => {
-                this.updateContent(state.content);
-                if (state.open) {
-                    this.open();
-                } else {
-                    this.close();
-                }
-        });
-
-        this.openStateSubscription = sidenavService.openState.subscribe(open => {
-            if (open) {
-                this.open();
-            } else {
-                this.close();
-            }
-        });
-    }
-
-    ngOnDestroy () {
-        this.stateSubscription.unsubscribe();
-        this.openStateSubscription.unsubscribe();
+        // store.subscribe('SIDENAV.OPEN', action => this.open());
+        // store.subscribe('SIDENAV.CLOSE', action => this.close());
+        // store.subscribe('SIDENAV.SET_CONTENT', action => this.updateContent(action.content));
     }
 
     open () {

@@ -29,9 +29,29 @@ import { SidenavComponent } from '../sidenav/sidenav.component';
 
 import { SidenavBodyDirective } from '../sidenav/sidenav-body.directive';
 
-import { MapService } from '../map/map.service';
-import { SearchService } from '../search/search.service';
-import { SidenavService } from '../sidenav/sidenav.service';
+import { AppState } from './state';
+import { InitialState, Store } from '../store';
+
+import { MapActions } from '../map/map.actions';
+
+
+const initialState: AppState = {
+    busy: false,
+    map: {
+        zoom: 1,
+        center: [0, 0],
+        extent: null,
+        fullExtent: [-13657661.739414563, 5700905.92043886, -13655116.88116592, 5702920.846916851],
+        selectedFeature: null,
+    },
+    search: {
+        term: null,
+    },
+    sidenav: {
+        open: false,
+        content: null,
+    }
+};
 
 
 @NgModule({
@@ -67,9 +87,12 @@ import { SidenavService } from '../sidenav/sidenav.service';
         SearchResultComponent
     ],
     providers: [
-        MapService,
-        SearchService,
-        SidenavService
+        {
+            provide: InitialState,
+            useValue: initialState
+        },
+        MapActions,
+        Store
     ],
     bootstrap: [
         AppComponent

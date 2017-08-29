@@ -3,9 +3,15 @@ import { Component, ElementRef, OnInit } from '@angular/core';
 import { MdSnackBar } from '@angular/material';
 
 import condition from 'ol/events/condition';
+import extent from 'ol/extent';
+import loadingstrategy from 'ol/loadingstrategy';
+import proj from 'ol/proj';
 
+import Feature from 'ol/feature';
 import Map from 'ol/map';
 import View from 'ol/view';
+
+import GeoJSONFormat from 'ol/format/geojson';
 
 import TileLayer from 'ol/layer/tile';
 import VectorLayer from 'ol/layer/vector';
@@ -14,6 +20,8 @@ import SelectInteraction from 'ol/interaction/select';
 
 import BingMapsSource from 'ol/source/bingmaps';
 import OSMSource from 'ol/source/osm';
+import TileWMSSource from 'ol/source/tilewms';
+import VectorSource from 'ol/source/vector';
 
 import Circle from 'ol/style/circle';
 import Fill from 'ol/style/fill';
@@ -21,12 +29,16 @@ import Stroke from 'ol/style/stroke';
 import Style from 'ol/style/style';
 import Text from 'ol/style/text';
 
-import { colorsHex, colorsRGB } from '../constants';
+import {
+    colorsHex,
+    colorsRGB,
+    defaultMapProjectionCode,
+    geographicProjectionCode,
+} from '../constants';
+
 import { environment } from '../environments/environment';
 
-import { MapService } from './map.service';
-import { SearchService } from '../search/search.service';
-import { SidenavService } from '../sidenav/sidenav.service';
+import { MapActions } from './map.actions';
 
 
 @Component({
@@ -52,12 +64,7 @@ export class MapComponent implements OnInit {
     constructor (
         private host: ElementRef,
         private snackBar: MdSnackBar,
-        private mapService: MapService,
-        private searchService: SearchService,
-        private sidenavService: SidenavService) {
-
-        this.map = mapService.map;
-        this.view = mapService.view;
+        public actions: MapActions) {
 
         this.baseLayers = this.makeBaseLayers();
         this.featureLayers = this.makeFeatureLayers();
@@ -66,20 +73,23 @@ export class MapComponent implements OnInit {
 
         this.highlightInteraction = this.makeHighlightInteraction(buildingLayer);
         this.selectInteraction = this.makeSelectInteraction(buildingLayer);
+
+        this.view = new View();
+
+        this.map = new Map({
+            controls: [],
+            layers: this.baseLayers.concat(this.featureLayers),
+            view: this.view
+        });
+
+        this.map.addInteraction(this.highlightInteraction);
+        this.map.addInteraction(this.selectInteraction);
     }
 
     ngOnInit () {
-        const map = this.map;
-        const target = this.host.nativeElement.querySelector('.map');
-
-        this.baseLayers.forEach(layer => map.addLayer(layer));
-        this.featureLayers.forEach(layer => map.addLayer(layer));
-
-        map.addInteraction(this.selectInteraction);
-        map.addInteraction(this.highlightInteraction);
-
-        map.setTarget(target)
-        this.zoomToFullExtent();
+        this.actions.setInstance(this.map);
+        this.actions.setTarget(this.host.nativeElement.querySelector('.map'));
+        this.actions.zoomToFullExtent();
     }
 
     makeBaseLayers () {
@@ -121,7 +131,7 @@ export class MapComponent implements OnInit {
 
     makeFeatureLayers () {
         return [
-            this.mapService.makeFeatureLayer('buildings.building', {
+            makeFeatureLayer('buildings.building', {
                 style: new Style({
                     fill: new Fill({
                         color: colorsRGB.psuGreen.concat([0.6])
@@ -132,8 +142,8 @@ export class MapComponent implements OnInit {
                     })
                 })
             }),
-            this.mapService.makeTileLayer('bicycles.bicycleroute', {maxResolution: 2}),
-            this.mapService.makeFeatureLayer('bicycles.bicycleparking', {
+            makeTileLayer('bicycles.bicycleroute', {maxResolution: 2}),
+            makeFeatureLayer('bicycles.bicycleparking', {
                 style: new Style({
                     image: new Circle({
                         fill: new Fill({
@@ -232,9 +242,135 @@ export class MapComponent implements OnInit {
         })
     }
 
+    /* Center */
+
+    setCenter (center, transform=false) {
+        this.actions.setCenter(center, transform);
+
+        if (transform) {
+            center = this.transform(center);
+        }
+        this.view.animate({ center, duration: 400 });
+    }
+
+    centerMapOnFeature (feature: Feature, threshold=new CenteringThreshold(), zoomIn=true,
+                        zoomThreshold=50, maxZoom=18) {
+        const map = this.map;
+        const view = this.view;
+        const size = map.getSize();
+        const width = size[0];
+        const height = size[1];
+        const currentZoom = view.getZoom();
+
+        const featureExtent = feature.getGeometry().getExtent();
+        const topRightCoord = extent.getTopRight(featureExtent);
+        const bottomLeftCoord = extent.getBottomLeft(featureExtent);
+        const featureCenter = extent.getCenter(featureExtent);
+
+        const topRightPixel = map.getPixelFromCoordinate(topRightCoord);
+        const bottomLeftPixel = map.getPixelFromCoordinate(bottomLeftCoord);
+        const featureCenterPixel = map.getPixelFromCoordinate(featureCenter);
+        const featureX = featureCenterPixel[0];
+        const featureY = featureCenterPixel[1];
+
+        const top = topRightPixel[1];
+        const right = topRightPixel[0];
+        const bottom = bottomLeftPixel[1];
+        const left = bottomLeftPixel[0];
+        const featureWidth = right - left;
+        const featureHeight = bottom - top;
+
+        const defaultNewX = featureX - (threshold.left - threshold.right) / 2;
+        const defaultNewY = featureY - (threshold.top - threshold.bottom) / 2;
+
+        let newX = null;
+        let newY = null;
+        let newCenter = null;
+
+        if ((height >= threshold.top && top < threshold.top) ||
+            (height >= threshold.bottom && bottom > (height - threshold.bottom))) {
+            newY = defaultNewY;
+        }
+
+        if ((width >= threshold.left && left < threshold.left) ||
+            (width >= threshold.right && right > (width - threshold.right))) {
+            newX = defaultNewX;
+        }
+
+        if (!(newX === null && newY === null)) {
+            newCenter = map.getCoordinateFromPixel([
+                newX === null ? defaultNewX : newX,
+                newY === null ? defaultNewY : newY
+            ]);
+        }
+
+        let animations = [];
+        let anchor = featureCenter;
+        let duration = 400;
+
+        if (newCenter !== null) {
+            animations.push({ center: newCenter, duration });
+        }
+
+        if (zoomIn &&
+            currentZoom < maxZoom &&
+            (featureWidth < zoomThreshold || featureHeight < zoomThreshold)) {
+            let w = featureWidth;
+            let h = featureHeight;
+            let zoom = currentZoom;
+            while (zoom < maxZoom && (w < zoomThreshold || h < zoomThreshold)) {
+                zoom += 1; w *= 2; h *= 2;
+            }
+            animations.push({ zoom, anchor, duration });
+        }
+
+        if (animations.length) {
+            view.animate.apply(view, animations);
+        }
+    }
+
+    /* Transform */
+
+    transform (coordinate, reverse=false) {
+        const projections = this._getTransformProjections(reverse);
+        return proj.transform(coordinate, projections.source, projections.destination);
+    }
+
+    transformExtent (extent, reverse=false) {
+        const projections = this._getTransformProjections(reverse);
+        return proj.transformExtent(extent, projections.source, projections.destination);
+    }
+
+    _getTransformProjections (reverse) {
+        let source = geographicProjectionCode;
+        let destination = defaultMapProjectionCode;
+        if (reverse) {
+            let temp = source;
+            source = destination;
+            destination = temp;
+        }
+        return { source, destination };
+    }
+
+    /* Zoom */
+
+    zoomIn (levels: number = 1) {
+        this.actions.zoomIn(levels);
+    }
+
+    zoomOut (levels: number = 1) {
+        this.actions.zoomOut(levels);
+    }
+
+    zoomToFullExtent () {
+        this.actions.zoomToFullExtent();
+    }
+
+    /* Feature Info */
+
     showFeatureInfo (feature) {
         const id = feature.getId();
-        this.searchService.searchById(id, true);
+        // this.store.dispatch('SEARCH.SEARCH_BY_ID', { id, explicit: true });
     }
 
     hideFeatureInfo () {
@@ -243,15 +379,31 @@ export class MapComponent implements OnInit {
             (interaction) => interaction instanceof SelectInteraction
         );
         selected.map((select) => select.getFeatures().clear());
-        this.sidenavService.close();
+        // this.store.dispatch('SIDENAV.CLOSE');
     }
+
+    clearSelectedFeature () {
+        const select = this.selectInteraction;
+        const selectCollection = select.getFeatures();
+        selectCollection.clear();
+    }
+
+    selectFeature (feature) {
+        const select = this.selectInteraction;
+        const selectCollection = select.getFeatures();
+        if (feature) {
+            selectCollection.push(feature);
+        }
+    }
+
+    /* Geolocation */
 
     goToMyLocation () {
         this.gettingCurrentPosition = true;
         navigator.geolocation.getCurrentPosition(position => {
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
-            const center = this.mapService.transform([longitude, latitude]);
+            const center = this.transform([longitude, latitude]);
             this.gettingCurrentPosition = false;
             this.view.animate({ center, duration: 400 });
         }, error => {
@@ -261,16 +413,67 @@ export class MapComponent implements OnInit {
             })
         });
     }
+}
 
-    zoomIn () {
-        this.mapService.zoomIn();
-    }
 
-    zoomOut () {
-        this.mapService.zoomOut();
-    }
+class CenteringThreshold {
+    top: number = 0;
+    right: number = 0;
+    bottom: number = 0;
+    left: number = 0;
+}
 
-    zoomToFullExtent () {
-        this.view.fit(environment.map.fullExtent);
-    }
+
+function makeFeatureLayer (layerName, options: {
+    minResolution?: Number,
+    maxResolution?: Number,
+    style?: Style
+}) {
+    return new VectorLayer({
+        source: makeWFSSource(layerName),
+        minResolution: options.minResolution,
+        maxResolution: options.maxResolution,
+        style: options.style
+    })
+}
+
+
+function makeWFSSource (layerName, projectionCode=defaultMapProjectionCode) {
+    const wfsURL = [
+        `${environment.map.server.baseURL}/campusmap/wfs`, [
+            'service=WFS',
+            'version=1.1.0',
+            'request=GetFeature',
+            `typename=campusmap:${layerName}`,
+            `srsname=${projectionCode}`,
+            'outputFormat=application/json'
+        ].join('&')
+    ].join('?');
+
+    return new VectorSource({
+        format: new GeoJSONFormat(),
+        strategy: loadingstrategy.bbox,
+        url: extent => `${wfsURL}&bbox=${extent.join(',')},${projectionCode}`
+    });
+}
+
+
+function makeTileLayer (layerName, options: { minResolution?: number, maxResolution?: number }) {
+    return new TileLayer({
+        source: makeTileSource(layerName),
+        minResolution: options.minResolution,
+        maxResolution: options.maxResolution
+    });
+}
+
+
+function makeTileSource (layerName) {
+    const wmsURL = `${environment.map.server.baseURL}/campusmap/wms`;
+    return new TileWMSSource({
+        serverType: 'geoserver',
+        url: wmsURL,
+        params: {
+            LAYERS: `campusmap:${layerName}`
+        }
+    });
 }
