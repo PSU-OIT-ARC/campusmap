@@ -18,6 +18,8 @@ import {
     MdToolbarModule
 } from '@angular/material';
 
+import { NgReduxModule, NgRedux } from '@angular-redux/store';
+
 import { AppComponent } from './app.component';
 import { AppToolbarComponent } from './toolbar.component';
 import { MapComponent } from '../map/map.component';
@@ -29,9 +31,11 @@ import { SidenavComponent } from '../sidenav/sidenav.component';
 
 import { SidenavBodyDirective } from '../sidenav/sidenav-body.directive';
 
-import { MapService } from '../map/map.service';
-import { SearchService } from '../search/search.service';
-import { SidenavService } from '../sidenav/sidenav.service';
+import { rootReducer } from '../store/reducer';
+import { AppState, INITIAL_STATE } from '../store/state';
+
+import { MapActions } from '../map/map.actions';
+import { SidenavActions } from '../sidenav/sidenav.actions';
 
 
 @NgModule({
@@ -52,7 +56,10 @@ import { SidenavService } from '../sidenav/sidenav.service';
         MdProgressSpinnerModule,
         MdSidenavModule,
         MdSnackBarModule,
-        MdToolbarModule
+        MdToolbarModule,
+
+        // Redux
+        NgReduxModule
     ],
     declarations: [
         AppComponent,
@@ -67,13 +74,15 @@ import { SidenavService } from '../sidenav/sidenav.service';
         SearchResultComponent
     ],
     providers: [
-        MapService,
-        SearchService,
-        SidenavService
+        MapActions,
+        SidenavActions
     ],
     bootstrap: [
         AppComponent
     ]
 })
-
-export class AppModule { }
+export class AppModule {
+    constructor (ngRedux: NgRedux<AppState>) {
+        ngRedux.configureStore(rootReducer, INITIAL_STATE);
+    }
+}

@@ -35,3 +35,6 @@ export const colorsRGB = {
 
     psuGray: [71, 67, 52]
 };
+
+export const geographicProjectionCode = 'EPSG:4326';
+export const defaultMapProjectionCode = 'EPSG:3857';

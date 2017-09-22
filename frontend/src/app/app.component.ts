@@ -13,6 +13,6 @@ export class AppComponent implements OnInit {
     ngOnInit () {
         const el = this.host.nativeElement;
         const sidenavContainer = el.querySelector('md-sidenav-container.container');
-        sidenavContainer.querySelector('.mat-sidenav-backdrop').remove();
+        sidenavContainer.querySelector('.mat-drawer-backdrop').remove();
     }
 }

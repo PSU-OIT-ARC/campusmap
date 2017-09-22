@@ -1,17 +1,38 @@
-import { Component, ElementRef, Input, OnInit } from '@angular/core';
+import { Component, ElementRef, Input } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
+import 'rxjs/add/observable/throw';
+import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/do';
 import 'rxjs/add/operator/debounceTime';
+import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 
 import GeoJSONFormat from 'ol/format/geojson';
 
-import { MapService } from '../map/map.service';
-import { SidenavService } from '../sidenav/sidenav.service';
-import { SearchError, SearchResult, SearchService } from './search.service';
 import { SidenavBodyComponent } from '../sidenav/sidenav-body.component';
 
+import { defaultMapProjectionCode, geographicProjectionCode } from '../constants';
 import { environment } from '../environments/environment';
+
+import { NgRedux } from '@angular-redux/store';
+import { AppState } from '../store';
+
+
+class SearchResponse {
+    results: any[];
+    count: number;
+}
+
+class SearchResult {
+    id: number;
+    name: string;
+}
+
+class SearchError {
+    status: number;
+    message: string;
+}
 
 
 @Component({
@@ -21,12 +42,14 @@ import { environment } from '../environments/environment';
         './search.component.scss'
     ]
 })
-export class SearchComponent implements OnInit {
+export class SearchComponent {
+    private url = `${environment.apiURL}/search/`;
     private searchTerms = new Subject<string>();
+    private currentRequest;
 
     private geoJSONFormatter = new GeoJSONFormat({
-        defaultDataProjection: 'EPSG:4326',
-        featureProjection: environment.map.projectionCode
+        defaultDataProjection: geographicProjectionCode,
+        featureProjection: defaultMapProjectionCode
     });
 
     public searchTerm = null;
@@ -38,31 +61,23 @@ export class SearchComponent implements OnInit {
 
     constructor (
         private host: ElementRef,
-        private mapService: MapService,
-        private sidenavService: SidenavService,
-        private searchService: SearchService) {
+        private http: HttpClient,
+        private ngRedux: NgRedux<AppState>) {
 
-    }
-
-    ngOnInit (): void {
-        this.searchService.error.subscribe(error => {
-            this.error = error;
-            this.results = null;
-        });
-
-        this.searchService.results.subscribe(results => {
-            this.error = null;
-            this.results = results;
-            if (this.searchService.explicit && results.length === 1) {
-                this.showResult(results[0]);
-            }
-        });
-
-        this.searchService.term.subscribe(term => this.searchTerm = term);
+        // this.store.subscribe('SEARCH.SEARCH_BY_ID', action => {
+        //     this.searchById(action.id, action.explicit);
+        // });
 
         this.searchTerms
             .debounceTime(200)
-            .do(term => this.search(term, false))
+            .do(term => {
+                if (term) {
+                    this.search(term, false);
+                } else {
+                    this.error = null;
+                    this.results = null;
+                }
+            })
             .subscribe();
 
         document.addEventListener('click', event => {
@@ -75,11 +90,53 @@ export class SearchComponent implements OnInit {
     }
 
     search (term, explicit=false) {
-        this.error = null;
-        this.results = null;
-        if (term) {
-            this.searchService.search(term, explicit);
+        let url = this.url;
+        let params = new HttpParams().set('q', term);
+        return this._search(url, params, explicit);
+    }
+
+    searchById (id, explicit=false) {
+        const url = `${this.url}${id}`;
+        return this._search(url, null, explicit);
+    }
+
+    _search (url, params=null, explicit=false) {
+        if (this.currentRequest) {
+            this.currentRequest.unsubscribe();
         }
+        this.currentRequest = this.doSearchRequest(url, params).subscribe(
+            results => {
+                this.error = null;
+                this.results = results;
+                if (explicit && results.length === 1) {
+                    this.showResult(results[0]);
+                }
+            },
+            error => {
+                this.error = error;
+                this.results = null;
+            }
+        );
+        return this.currentRequest;
+    }
+
+    doSearchRequest (url, params?): Observable<SearchResult[]> {
+        return this.http.get<SearchResponse>(url, { params })
+            .map(response => {
+                return response.results as SearchResult[];
+            })
+            .catch(error => {
+                let message;
+                if (error.status === 404) {
+                    message = 'No results found';
+                } else {
+                    message = 'Unable to search at this time';
+                }
+                return Observable.throw({
+                    status: error.status,
+                    message: message
+                });
+            });
     }
 
     reset () {
@@ -87,28 +144,27 @@ export class SearchComponent implements OnInit {
         this.results = null;
         this.showResults = false;
         this.searchTerms.next(null);
-        this.sidenavService.close();
-        this.mapService.selectFeature('select', null);
+        // this.store.dispatch('SIDENAV.CLOSE');
+        // this.store.dispatch('MAP.CLEAR_SELECTED_FEATURE');
     }
 
     showResult (result) {
-        const feature = this.geoJSONFormatter.readFeature(result.geom)
+        const feature = this.geoJSONFormatter.readFeature(result.geom);
+        const threshold = { top: 50, right: 50, bottom: 50, left: 450 };
+
         this.results = [result];
         this.showResults = false;
-        this.searchService.setTerm(result.name);
+        this.searchTerm = result.name;
 
-        this.sidenavService.setState({
-            content: {
-                title: result.name,
-                subtitle: result.code,
-                bodyComponent: SearchResultComponent,
-                bodyContext: result
-            },
-            open: true
-        });
-
-        this.mapService.centerMapOnFeature(feature, { top: 50, right: 50, bottom: 50, left: 450 });
-        this.mapService.selectFeature('select', feature);
+        // this.store.dispatch('SIDENAV.SET_CONTENT', {
+        //     title: result.name,
+        //     subtitle: result.code,
+        //     bodyComponent: SearchResultComponent,
+        //     bodyContext: result
+        // });
+        // this.store.dispatch('SIDENAV.OPEN');
+        // this.store.dispatch('MAP.CENTER_ON_FEATURE', { feature, threshold});
+        // this.store.dispatch('MAP.SELECT_FEATURE', { feature });
     }
 }
 
